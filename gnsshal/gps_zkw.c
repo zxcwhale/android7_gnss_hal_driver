@@ -34,8 +34,8 @@
 #define _REALLY_INCLUDE_SYS__SYSTEM_PROPERTIES_H_
 #include <sys/_system_properties.h>
 #endif
+//#include <hardware/gps7.h>
 #include <hardware/gps.h>
-//#include <hardware/gps_internal.h>
 
 /* the name of the controlled socket */
 #define GPS_CHANNEL_NAME        "/dev/ttyS1"
@@ -52,6 +52,7 @@
 #else
 #  define DBG(...)    ((void)0)
 #  define VER(...)    ((void)0)
+#  define ERR(...)    ((void)0)
 #endif
 static int flag_unlock = 0;
 GpsStatus gps_status;
@@ -549,6 +550,17 @@ nmea_reader_update_sv_status_gps(NmeaReader* r, int sv_index,
 }
 */
 
+static int 
+get_svid(int prn, int sv_type)
+{
+        if (sv_type == GNSS_CONSTELLATION_GLONASS && prn >= 1 && prn <= 32)
+                return prn + 64;
+        else if (sv_type == GNSS_CONSTELLATION_BEIDOU && prn >= 1 && prn <= 32)
+                return prn + 200;
+
+        return prn;
+}
+
 static int
 nmea_reader_update_sv_status_gnss(NmeaReader* r, int sv_index,
                                   int id, Token elevation,
@@ -663,6 +675,20 @@ nmea_reader_parse(NmeaReader* const r)
         }
         else if (!memcmp(tok.p, "GSA", 3)) {
                 Token tok_fix = nmea_tokenizer_get(tzer, 2);
+                Token tok_svs = nmea_tokenizer_get(tzer, 18);
+                switch(tok_svs.p[0]) {
+                case '1':
+                        sv_type = GNSS_CONSTELLATION_GPS;
+                        break;
+                case '2':
+                        sv_type = GNSS_CONSTELLATION_GLONASS;
+                        break;
+                case '4':
+                        sv_type = GNSS_CONSTELLATION_BEIDOU;
+                        break;
+                default:
+                        break;
+                }
                 int idx, max = 12;  /*the number of satellites in GPGSA*/
 
                 r->fix_mode = str2int(tok_fix.p, tok_fix.end);
@@ -677,8 +703,12 @@ nmea_reader_parse(NmeaReader* const r)
                                         DBG("GSA: found %d active satellites\n", idx);
                                         break;
                                 }
-                                int sate_id = str2int(tok_satellite.p, tok_satellite.end);
-                                //if (sv_type == BDS_SV) {
+                                int prn = str2int(tok_satellite.p, tok_satellite.end);
+                                int svid = get_svid(prn, sv_type);
+                                if (svid >= 0 && svid < 256)
+                                        r->sv_used_in_fix[svid] = 1;
+                                        
+                                /*
                                 if (sv_type == GNSS_CONSTELLATION_BEIDOU) {
                                         sate_id += 200;
                                 }
@@ -700,7 +730,8 @@ nmea_reader_parse(NmeaReader* const r)
                                         VER("GSA: invalid sentence, ignore!!");
                                         break;
                                 }
-                                DBG("GSA:sv_used_in_fix[%d] = %d\n", sate_id, r->sv_used_in_fix[sate_id]);
+                                DBG("GSA:sv_used_in_fix[%d] = %d\n", svid, r->sv_used_in_fix[svid]);
+                                */
                         }
                 }
         }
@@ -747,7 +778,9 @@ nmea_reader_parse(NmeaReader* const r)
                 for (idx = 0; idx < sv_num; idx++) {
                         base_idx = base*(idx+1);
                         Token tok_id  = nmea_tokenizer_get(tzer, base_idx+0);
-                        int sv_id = str2int(tok_id.p, tok_id.end);
+                        int prn = str2int(tok_id.p, tok_id.end);
+                        int svid = get_svid(prn, sv_type);
+                        /*
                         if (sv_type == GNSS_CONSTELLATION_BEIDOU) {
                                 sv_id += 200;
                                 DBG("It is BDS SV: %d", sv_id);
@@ -756,10 +789,11 @@ nmea_reader_parse(NmeaReader* const r)
                                 sv_id += 64;
                                 DBG("It is GLN SV: %d", sv_id);
                         }
+                        */
                         Token tok_ele = nmea_tokenizer_get(tzer, base_idx+1);
                         Token tok_azi = nmea_tokenizer_get(tzer, base_idx+2);
                         Token tok_snr = nmea_tokenizer_get(tzer, base_idx+3);
-                        nmea_reader_update_sv_status_gnss(r, sv_base+idx, sv_id, tok_ele, tok_azi, tok_snr);
+                        nmea_reader_update_sv_status_gnss(r, sv_base+idx, svid, tok_ele, tok_azi, tok_snr);
                 }
                 if (seq == num) {
                         if (r->sv_count <= cnt) {
