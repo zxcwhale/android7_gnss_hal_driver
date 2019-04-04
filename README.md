@@ -1,7 +1,7 @@
 # 卫星定位接收机HAL驱动
 
 针对Android7.0或以上版本.
-对于Android4.x 5.x 或 6.x, 请使用项目 [](https://github.com/zxcwhale/android_hal_gpsbds).
+对于Android4.x 5.x 或 6.x, 请使用项目[android_hal_gpsbds](https://github.com/zxcwhale/android_hal_gpsbds).
 
 ## 使用方法
 
