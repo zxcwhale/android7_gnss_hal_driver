@@ -895,6 +895,7 @@ nmea_reader_addc(NmeaReader* const r, int  c)
                 nmea_reader_parse(r);
 
                 DBG("start nmea_cb\n");
+		r->in[r->pos] = 0;
                 callback_backup.nmea_cb(r->fix.timestamp, r->in, r->pos);
                 r->pos = 0;
         }
