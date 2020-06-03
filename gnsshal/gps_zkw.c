@@ -1018,7 +1018,7 @@ gps_state_thread(void*  arg)
         NmeaReader  reader[1];
         int         gps_fd     = state->fd;
         int         control_fd = state->control[1];
-        int         atc_fd = state->sockfd;
+        //int         atc_fd = state->sockfd;
 
         int epoll_fd = state->epoll_hd;
         int         test_started = 0;
@@ -1030,8 +1030,8 @@ gps_state_thread(void*  arg)
                 ERR("epoll register control_fd error, error num is %d\n, message is %s\n", errno, strerror(errno));
         if (epoll_register(epoll_fd, gps_fd) < 0)
                 ERR("epoll register gps_fd error, error num is %d\n, message is %s\n", errno, strerror(errno));
-        if (epoll_register(epoll_fd, atc_fd) < 0)
-                ERR("epoll register atc_fd error, error num is %d\n, message is %s\n", errno, strerror(errno));
+        //if (epoll_register(epoll_fd, atc_fd) < 0)
+        //        ERR("epoll register atc_fd error, error num is %d\n, message is %s\n", errno, strerror(errno));
 
         DBG("gps thread running: PPID[%d], PID[%d]\n", getppid(), getpid());
         DBG("HAL thread is ready, realease lock, and CMD_START can be handled\n");
