@@ -223,6 +223,7 @@ str2float(const char*  p, const char*  end)
 /*****************************************************************/
 
 // #define  NMEA_MAX_SIZE  83
+#define MAX_SV_COUNT	300
 #define  NMEA_MAX_SIZE  128
 /*maximum number of SV information in GPGSV*/
 #define  NMEA_MAX_SV_INFO 4
@@ -257,7 +258,7 @@ typedef struct {
         char    in[ NMEA_MAX_SIZE+1 ];
         int     sv_status_can_report;
         int     location_can_report;
-        int 	sv_used_in_fix[256];
+        int 	sv_used_in_fix[MAX_SV_COUNT];
 } NmeaReader;
 
 
@@ -555,7 +556,7 @@ get_svid(int prn, int sv_type)
 {
         if (sv_type == GNSS_CONSTELLATION_GLONASS && prn >= 1 && prn <= 32)
                 return prn + 64;
-        else if (sv_type == GNSS_CONSTELLATION_BEIDOU && prn >= 1 && prn <= 32)
+        else if (sv_type == GNSS_CONSTELLATION_BEIDOU && prn >= 1 && prn <= 64)
                 return prn + 200;
 
         return prn;
@@ -579,7 +580,7 @@ nmea_reader_update_sv_status_gnss(NmeaReader* r, int sv_index,
         } else if ((prn >= 65) && (prn <= 96)) {
                 r->sv_status_gnss.gnss_sv_list[sv_index].svid = prn-64;
                 r->sv_status_gnss.gnss_sv_list[sv_index].constellation = GNSS_CONSTELLATION_GLONASS;
-        } else if ((prn >= 201) && (prn <= 237)) {
+        } else if ((prn >= 201) && (prn <= 264)) {
                 r->sv_status_gnss.gnss_sv_list[sv_index].svid = prn-200;
                 r->sv_status_gnss.gnss_sv_list[sv_index].constellation = GNSS_CONSTELLATION_BEIDOU;
         } else if ((prn >= 401) && (prn <= 436)) {
@@ -705,7 +706,7 @@ nmea_reader_parse(NmeaReader* const r)
                                 }
                                 int prn = str2int(tok_satellite.p, tok_satellite.end);
                                 int svid = get_svid(prn, sv_type);
-                                if (svid >= 0 && svid < 256)
+                                if (svid >= 0 && svid < MAX_SV_COUNT)
                                         r->sv_used_in_fix[svid] = 1;
                                         
                                 /*
@@ -867,7 +868,7 @@ nmea_reader_parse(NmeaReader* const r)
                         DBG("Report sv status");
                         callback_backup.gnss_sv_status_cb(&r->sv_status_gnss);
                         r->sv_count = r->sv_status_gnss.num_svs = 0;
-                        memset(r->sv_used_in_fix, 0, 256*sizeof(int));
+                        memset(r->sv_used_in_fix, 0, sizeof(r->sv_used_in_fix));
                 }
         }
 }
