@@ -1,8 +1,10 @@
 # 卫星定位接收机HAL驱动
 
 适用于Android7或Android8
-对于Android4, Android5, Android6, 请使用项目[android_hal_gpsbds](https://git    hub.com/zxcwhale/android_hal_gpsbds).
-对于Android9或Android10, 请使用项目[android9_gnss_hal_driver](https://github.    com/zxcwhale/android9_gnss_hal_driver).
+
+对于Android4, Android5, Android6, 请使用项目[android_hal_gpsbds](https://github.com/zxcwhale/android_hal_gpsbds).
+
+对于Android9或Android10, 请使用项目[android9_gnss_hal_driver](https://github.com/zxcwhale/android9_gnss_hal_driver).
 ## 使用方法
 
 1. 修改gps_zkw.c文件中的`GPS_CHANNEL_NAME`为接收机的TTY号.
