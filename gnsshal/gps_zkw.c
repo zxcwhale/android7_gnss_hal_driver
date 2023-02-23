@@ -1200,12 +1200,12 @@ zkw_gps_init(GpsCallbacks* callbacks)
         callback_backup = *callbacks;
 
         gps_state_init(s);
-        s->init = 1;
         if (s->fd < 0) {
                 return -1;
         }
         DBG("Set GPS_CAPABILITY_SCHEDULING \n");
         callback_backup.set_capabilities_cb(GPS_CAPABILITY_SCHEDULING);
+        s->init = 1;
         return 0;
 }
 
@@ -1214,8 +1214,8 @@ zkw_gps_cleanup(void)
 {
         GpsState*  s = _gps_state;
 
-        if (s->init)
-                gps_state_done(s);
+        //if (s->init)
+        //        gps_state_done(s);
         DBG("zkw_gps_cleanup done");
         //     return NULL;
 }
@@ -1373,7 +1373,7 @@ static struct hw_module_methods_t gps_module_methods = {
 struct hw_module_t HAL_MODULE_INFO_SYM = {
         .tag = HARDWARE_MODULE_TAG,
         .version_major = 1,
-        .version_minor = 0,
+        .version_minor = 1,
         .id = GPS_HARDWARE_MODULE_ID,
         .name = "Hardware GPS Module",
         .author = "",
