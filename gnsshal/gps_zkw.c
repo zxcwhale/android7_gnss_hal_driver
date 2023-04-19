@@ -40,6 +40,9 @@
 /* the name of the controlled socket */
 #define GPS_CHANNEL_NAME        "/dev/ttyS1"
 #define TTY_BAUD                B9600   // B115200
+					//
+#define REDUCE_GSV_FREQ         0 
+#define TTY_BOOST               0
 
 #define  GPS_DEBUG  1
 #define  NEMA_DEBUG 1   /*the flag works if GPS_DEBUG is defined*/
@@ -1133,6 +1136,37 @@ Exit:
         return;
 }
 
+static void
+gpstty_boost(int tty_fd, int baud)
+{
+        const char msg[] = "$PCAS01,5*19\r\n";
+
+        if (TTY_BOOST == 0) {
+                DBG("TTY Boost OFF.");
+                return;
+        }
+
+        if (baud > B9600) {
+                DBG("No need to boost baudrate.");
+                return;
+        }
+
+        write(tty_fd, msg, strlen(msg));
+
+        usleep(200 * 1000);     // sleep 200ms to make sure msg is send at TTY_BAUD
+
+        // Upgrade tty's baudrate to 115200
+    
+        struct termios cfg;
+        tcgetattr(tty_fd, &cfg);
+        cfmakeraw(&cfg);
+        cfsetispeed(&cfg, B115200);
+        cfsetospeed(&cfg, B115200);
+        tcsetattr(tty_fd, TCSANOW, &cfg);
+
+        DBG("Boost baudrate to 115200.");
+}
+ 
 
 static void
 gps_state_init(GpsState*  state)
@@ -1142,7 +1176,7 @@ gps_state_init(GpsState*  state)
         state->fd         = -1;
 
         DBG("Try open gps hardware:  %s", GPS_CHANNEL_NAME);
-        state->fd = open(GPS_CHANNEL_NAME, O_RDONLY);    // support poll behavior
+        state->fd = open(GPS_CHANNEL_NAME, O_RDONLY | O_NONBLOCK | O_NOCTTY);    // support poll behavior
         //state->fd = open(GPS_CHANNEL_NAME, O_RDWR | O_NONBLOCK | O_NOCTTY);
         int epoll_fd   = epoll_create(2);
         state->epoll_hd = epoll_fd;
@@ -1172,6 +1206,16 @@ gps_state_init(GpsState*  state)
         }
 
         DBG("gps state initialized, the thread is %d\n", (int)state->thread);
+
+	if (REDUCE_GSV_FREQ) {
+		// Set GSV freq to once per 2 seconds
+		char msg[] = "$PCAS03,,,,2,,,,,,,,,,*30\r\n";
+		write(state->fd, msg, strlen(msg));
+        }
+
+        // Try Boost baudrate
+        gpstty_boost(state->fd, TTY_BAUD);
+
         return;
 
 Fail:
