@@ -41,7 +41,7 @@
 #define GPS_CHANNEL_NAME        "/dev/ttyS1"
 #define TTY_BAUD                B9600   // B115200
 					//
-#define REDUCE_GSV_FREQ         0 
+#define REDUCE_SV_FREQ         0 
 #define TTY_BOOST               0
 
 #define  GPS_DEBUG  1
@@ -1207,8 +1207,8 @@ gps_state_init(GpsState*  state)
 
         DBG("gps state initialized, the thread is %d\n", (int)state->thread);
 
-	if (REDUCE_GSV_FREQ) {
-		// Set GSV freq to once per 2 seconds
+	if (REDUCE_SV_FREQ) {
+		// Set GSA and GSV outputs once per 2 seconds
 		char msg[] = "$PCAS03,,,2,2,,,,,,,,,,*02\r\n";	/* NMEA command, write(fd, cmdbuf, strlen(cmdbuf)); */
 
 		write(state->fd, msg, strlen(msg));
