@@ -1209,7 +1209,8 @@ gps_state_init(GpsState*  state)
 
 	if (REDUCE_GSV_FREQ) {
 		// Set GSV freq to once per 2 seconds
-		char msg[] = "$PCAS03,,,,2,,,,,,,,,,*30\r\n";
+		char msg[] = "$PCAS03,,,2,2,,,,,,,,,,*02\r\n";	/* NMEA command, write(fd, cmdbuf, strlen(cmdbuf)); */
+
 		write(state->fd, msg, strlen(msg));
         }
 
